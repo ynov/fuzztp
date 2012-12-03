@@ -14,6 +14,9 @@ int fuzztp_client_main(int argc, char **argv)
         printf("fuzztp >> ");
         fuzztp_gets(command);
         printf("command: (%s)\n", command);
+        if (strequal(command, "QUIT")) {
+            break;
+        }
     }
 
     return 0;

@@ -8,6 +8,7 @@
 
 #define INPUTBUFFSIZE 256
 
+int strequal(const char *a, const char *b);
 char *fuzztp_getcwd(int argc, char **argv);
 
 /* STDIN/STDOUT IO */

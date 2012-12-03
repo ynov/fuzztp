@@ -1,5 +1,10 @@
 #include "fuzztp_lib.h"
 
+int strequal(const char *a, const char *b)
+{
+    return !strcmp(a, b);
+}
+
 char *fuzztp_getcwd(int argc, char **argv)
 {
     char cwd[512];
