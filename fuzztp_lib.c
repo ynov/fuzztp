@@ -7,7 +7,7 @@ int strequal(const char *a, const char *b)
 
 char *fuzztp_getcwd(int argc, char **argv)
 {
-    char cwd[512];
+    char cwd[STDBUFFSIZE];
     char *ret_val;
     int i;
 
@@ -38,4 +38,31 @@ char *fuzztp_gets(char *s)
     s[strlen(s) - 1] = '\0';
 
     return s;
+}
+
+int fuzztp_strtoken(char *str, char ***str_arr, char tok, int max_arr_len)
+{
+    int i, j, k, len;
+
+    *str_arr = (char**) calloc(max_arr_len, sizeof(char*));
+
+    len = strlen(str);
+    for (i = 0; i < len; i++) {
+        str[i] = (str[i] == tok) ? '\0' : str[i];
+    }
+
+    j = 0;
+    k = 1;
+    for (i = 0; i < len; i++) {
+        if (str[i] != '\0' && k == 1) {
+            (*str_arr)[j++] = &str[i];
+            k = 0;
+        }
+
+        else if (str[i] == '\0') {
+            k = 1;
+        }
+    }
+
+    return j;
 }
