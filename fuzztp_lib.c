@@ -26,3 +26,11 @@ char *fuzztp_getcwd(int argc, char **argv)
     strcpy(ret_val, cwd);
     return ret_val;
 }
+
+char *fuzztp_gets(char *s)
+{
+    s = fgets(s, INPUTBUFFSIZE, stdin);
+    s[strlen(s) - 1] = '\0';
+
+    return s;
+}

@@ -1,6 +1,6 @@
 #include "fuzztp_lib.h"
 
-int fuzztp_server(int argc, char **argv)
+int fuzztp_server_main(int argc, char **argv)
 {
     char *cwd;
 

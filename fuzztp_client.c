@@ -1,13 +1,20 @@
 #include "fuzztp_lib.h"
 
-int fuzztp_client(int argc, char **argv)
+int fuzztp_client_main(int argc, char **argv)
 {
     char *cwd;
+    char command[INPUTBUFFSIZE];
 
     cwd = fuzztp_getcwd(argc, argv);
 
     printf("fuzztp client\n");
     printf("cwd: %s\n", cwd);
+
+    for(;;) {
+        printf("fuzztp >> ");
+        fuzztp_gets(command);
+        printf("command: (%s)\n", command);
+    }
 
     return 0;
 }
