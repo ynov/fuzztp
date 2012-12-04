@@ -5,4 +5,5 @@ all:
 
 clean:
 	rm -vf build/*
+	touch build/empty
 
