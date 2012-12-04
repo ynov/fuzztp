@@ -98,6 +98,9 @@ static int fuzztpc_retrieve(char *path)
         printf("| ERROR! No open connection!\n");
         return CI_ERROR;
     }
+
+    /* TODO */
+
     return CI_RETR;
 }
 
@@ -108,6 +111,9 @@ static int fuzztpc_store(char *path)
         printf("| ERROR! No open connection!\n");
         return CI_ERROR;
     }
+
+    /* TODO */
+
     return CI_STOR;
 }
 

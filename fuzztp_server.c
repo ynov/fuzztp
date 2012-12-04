@@ -120,12 +120,16 @@ static void fuzztps_handle_conn(const char *client_addr)
 /******************************************************************************/
 static int fuzztps_retrieve(char *path)
 {
+    /* TODO */
+
     return CI_RETR;
 }
 
 /******************************************************************************/
 static int fuzztps_store(char *path)
 {
+    /* TODO */
+
     return CI_STOR;
 }
 
