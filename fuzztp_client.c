@@ -1,7 +1,7 @@
 #include "fuzztp_lib.h"
 #ifdef BUILD_CLIENT
 
-// DECLARATION
+/* DECLARATION */
 static struct fuzztp_client f;
 
 static void init_f();
@@ -17,7 +17,7 @@ static int fuzztpc_cwd(char *path);
 static int fuzztpc_cd(char *path);
 
 static void fuzztpc_parse_command(char *command, int *loop_status);
-// END DECLARATION
+/* END DECLARATION */
 
 /******************************************************************************/
 static void init_f()

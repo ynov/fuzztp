@@ -1,7 +1,7 @@
 #include "fuzztp_lib.h"
 #ifdef BUILD_SERVER
 
-// DECLARATION
+/* DECLARATION */
 static struct fuzztp_server f;
 static int conn_id;
 
@@ -17,7 +17,7 @@ static int fuzztps_list(char *path);
 static int fuzztps_cwd(char *path);
 
 static void fuzztps_parse_msg(char *client_msg, const char *client_addr, int *loop_status);
-// END DECLARATION
+/* END DECLARATION */
 
 /******************************************************************************/
 static void init_f()
@@ -180,7 +180,9 @@ static int fuzztps_list(char *path)
         } else {
             sprintf(msg, "%s\n%s", msg, list[i]->d_name);
         }
+        free(list[i]);
     }
+    free(list);
 
     send(f.accsocket_fd, msg, strlen(msg), 0);
 
