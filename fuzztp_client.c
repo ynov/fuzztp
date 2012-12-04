@@ -138,6 +138,29 @@ static int fuzztpc_quit()
 /******************************************************************************/
 static int fuzztpc_list(char *path)
 {
+    char msg[STDBUFFSIZE];
+    char res[BIGBUFFSIZE];
+    int lb;
+
+    memset(&msg, 0, sizeof(msg));
+    if (path != NULL) {
+        sprintf(msg, CMD_LIST " %s", path);
+    } else {
+        strcpy(msg, CMD_LIST);
+    }
+
+    fuzztpc_sendsrvmsg(msg, strlen(msg), res, SMALLBUFFSIZE);
+    printf("|| %s\n", res);
+    res[strlen(SR150)] = '\0';
+
+    if (strequal(res, SR150)) {
+        lb = recv(f.socket_fd, res, sizeof(res), 0);
+        res[lb] = '\0';
+        printf("\n%s\n", res);
+    } else {
+        printf("| ERROR while listing contents on the server!\n");
+    }
+
     return CI_LIST;
 }
 

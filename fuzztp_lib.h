@@ -13,7 +13,9 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <signal.h>
+#include <dirent.h>
 
+#define BIGBUFFSIZE 2048
 #define STDBUFFSIZE 256
 #define INPUTBUFFSIZE 256
 #define MEDIUMBUFFSIZE 128

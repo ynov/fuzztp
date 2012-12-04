@@ -143,6 +143,42 @@ static int fuzztps_quit(const char *client_addr)
 /******************************************************************************/
 static int fuzztps_list(char *path)
 {
+    struct dirent **list;
+    char msg[BIGBUFFSIZE];
+    int i, n;
+
+    if (path == NULL) {
+        path = getcwd(NULL, STDBUFFSIZE);
+    }
+
+    printf("LIST: %s (CONN_ID: %d)\n", path, conn_id);
+
+    n = scandir(path, &list, NULL, alphasort);
+
+    if (n < 0) {
+        strcpy(msg, SR501);
+        send(f.accsocket_fd, msg, strlen(msg), 0);
+        printf("-- FAILED\n");
+        return CI_ERROR;
+    } else {
+        strcpy(msg, SR150);
+        send(f.accsocket_fd, msg, strlen(msg), 0);
+        printf("-- SUCCESS\n");
+    }
+
+    sprintf(msg, "CWD: %s", getcwd(NULL, STDBUFFSIZE));
+    sprintf(msg, "%s\nPATH: %s", msg, path);
+    sprintf(msg, "%s\n", msg);
+    for (i = 0; i < n; i++) {
+        if (list[i]->d_type == DT_DIR) {
+            sprintf(msg, "%s\n%s/ (dir)", msg, list[i]->d_name);
+        } else {
+            sprintf(msg, "%s\n%s", msg, list[i]->d_name);
+        }
+    }
+
+    send(f.accsocket_fd, msg, strlen(msg), 0);
+
     return CI_LIST;
 }
 
