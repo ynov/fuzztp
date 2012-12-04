@@ -16,6 +16,7 @@ static int fuzztpc_parse_command(char *command);
 static void init_f()
 {
     f.connect_status = DISCONNECTED;
+    memset(&f.hints, 0, sizeof(f.hints));
     f.hints.ai_family = AF_INET;
     f.hints.ai_socktype = SOCK_STREAM;
 }
@@ -23,6 +24,8 @@ static void init_f()
 /******************************************************************************/
 static int fuzztpc_connect(char *srv_addr)
 {
+    char res[STDBUFFSIZE];
+
     getaddrinfo(srv_addr,
             FUZZTPPORT,
             &f.hints,
@@ -32,7 +35,7 @@ static int fuzztpc_connect(char *srv_addr)
             f.srv_info->ai_family,
             f.srv_info->ai_socktype,
             f.srv_info->ai_protocol)) == -1) {
-        printf("ERROR! Couldn't make socket!\n");
+        printf("| ERROR! Couldn't make socket!\n");
         close(f.socket_fd);
         return CI_ERROR;
     }
@@ -40,17 +43,24 @@ static int fuzztpc_connect(char *srv_addr)
     if ((connect(f.socket_fd,
             f.srv_info->ai_addr,
             f.srv_info->ai_addrlen)) == -1) {
-        printf("ERROR! Couldn't connect to the server!\n");
+        printf("| ERROR! Couldn't connect to the server!\n");
         return CI_ERROR;
     }
 
     f.srv_ipaddr = inet_ntoa(
             (*(struct sockaddr_in*) f.srv_info->ai_addr).sin_addr);
-    printf("Connecting to %s\n", f.srv_ipaddr);
+    printf("| Connecting to %s\n", f.srv_ipaddr);
 
     freeaddrinfo(f.srv_info);
 
-    f.connect_status = CONNECTED;
+    recv(f.socket_fd, res, STDBUFFSIZE, 0);
+
+    printf("|| %s\n", res);
+    res[3] = '\0';
+    if (strequal(res, SR200)) {
+        printf("| Connected!\n");
+        f.connect_status = CONNECTED;
+    }
 
     return CI_CONN;
 }
@@ -62,16 +72,16 @@ static int fuzztpc_sendsrvmsg(const char *msg,
     int last_byte;
 
     if (send(f.socket_fd, msg, msg_size, 0) == -1) {
-        printf("ERROR! Send-Receive server message error!\n");
+        printf("| ERROR! Send-Receive server message error!\n");
         return -1;
     }
 
     if ((last_byte = recv(f.socket_fd, res, res_size, 0)) == -1) {
-        printf("ERROR! Send-Receive server message error!\n");
+        printf("| ERROR! Send-Receive server message error!\n");
         return -1;
     }
 
-    res[last_byte - 1] = '\0';
+    res[last_byte] = '\0';
     return 0;
 }
 
@@ -79,7 +89,7 @@ static int fuzztpc_sendsrvmsg(const char *msg,
 static int fuzztpc_retrieve(char *path)
 {
     if (f.connect_status == DISCONNECTED) {
-        printf("ERROR! No open connection!\n");
+        printf("| ERROR! No open connection!\n");
         return CI_ERROR;
     }
     return CI_RETR;
@@ -89,7 +99,7 @@ static int fuzztpc_retrieve(char *path)
 static int fuzztpc_store(char *path)
 {
     if (f.connect_status == DISCONNECTED) {
-        printf("ERROR! No open connection!\n");
+        printf("| ERROR! No open connection!\n");
         return CI_ERROR;
     }
     return CI_STOR;
@@ -105,7 +115,7 @@ static int fuzztpc_list(char *path)
 static int fuzztpc_cwd(char *path)
 {
     if (f.connect_status == DISCONNECTED) {
-        printf("ERROR! No open connection!\n");
+        printf("| ERROR! No open connection!\n");
         return CI_ERROR;
     }
     return CI_CWD;
@@ -121,7 +131,7 @@ static int fuzztpc_cd(char *path)
 static int fuzztpc_quit()
 {
     if (f.connect_status == DISCONNECTED) {
-        printf("ERROR! No open connection!\n");
+        printf("| ERROR! No open connection!\n");
         return CI_ERROR;
     }
 
@@ -129,10 +139,12 @@ static int fuzztpc_quit()
     char res[SMALLBUFFSIZE];
 
     fuzztpc_sendsrvmsg(msg, sizeof(msg), res, sizeof(res));
+    printf("|| %s\n", res);
 
     if(strequal(res, QUITMSG)) {
         close(f.socket_fd);
         f.connect_status = DISCONNECTED;
+        printf("| Disconnected!\n");
     }
 
     return CI_QUIT;
@@ -151,7 +163,7 @@ static int fuzztpc_parse_command(char *command)
         if (arr_len == 2) {
             return fuzztpc_connect(cmd_arr[1]);
         } else {
-            printf("ERROR! Use: CONN <ip_address>\n");
+            printf("| ERROR! Use: CONN <ip_address>\n");
         }
     }
 
@@ -160,7 +172,7 @@ static int fuzztpc_parse_command(char *command)
         if (arr_len == 2) {
             return fuzztpc_retrieve(cmd_arr[1]);
         } else {
-            printf("ERROR! Use: RETR <path>\n");
+            printf("| ERROR! Use: RETR <path>\n");
         }
     }
 
@@ -169,7 +181,7 @@ static int fuzztpc_parse_command(char *command)
         if (arr_len == 2) {
             return fuzztpc_store(cmd_arr[1]);
         } else {
-            printf("ERROR! Use: PATH <path>\n");
+            printf("| ERROR! Use: PATH <path>\n");
         }
     }
 
@@ -193,7 +205,7 @@ static int fuzztpc_parse_command(char *command)
         if (arr_len == 2) {
             return fuzztpc_cwd(cmd_arr[1]);
         } else {
-            printf("ERROR! Use: CWD <path>\n");
+            printf("| ERROR! Use: CWD <path>\n");
         }
     }
 
@@ -202,7 +214,7 @@ static int fuzztpc_parse_command(char *command)
         if (arr_len == 2) {
             return fuzztpc_cd(cmd_arr[1]);
         } else {
-            printf("ERROR! Use: CD <path>\n");
+            printf("| ERROR! Use: CD <path>\n");
         }
     }
 
@@ -231,10 +243,13 @@ int fuzztp_client_main(int argc, char **argv)
     init_f();
 
     for(;;) {
-        printf("fuzztp >> ");
+        printf("\nfuzztp >> ");
         fuzztp_gets(command);
         c_id = fuzztpc_parse_command(command);
 
+        if (c_id == CI_UNDEFINED) {
+            printf("| Unknown command!\n");
+        }
         if (c_id == CI_SHUTDOWN) {
             break;
         }

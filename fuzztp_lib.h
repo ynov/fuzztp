@@ -9,12 +9,16 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <signal.h>
 
 #define STDBUFFSIZE 256
 #define INPUTBUFFSIZE 256
 #define SMALLBUFFSIZE 32
+
+#define BACKLOG 10
 
 #define FUZZTPPORT "15601"
 #define QUITMSG "QUIT"
@@ -61,11 +65,20 @@ struct fuzztp_client {
 /******************************************************************************/
 /** BEGIN FUZZTP_SERVER *******************************************************/
 
+/* SR, Server Response */
+#define SR150   "150"   /* ~(CONN, QUIT, CWD) */
+#define SR250   "250"   /* Send/Reveive data */
+#define SR200   "200"   /* (CONN, QUIT, CWD) */
+#define SR500   "500"   /* Invalid command */
+#define SR501   "501"   /* Invalid path */
 
 struct fuzztp_server {
     int socket_fd;
+    int accsocket_fd;
     struct addrinfo hints;
     struct addrinfo *srv_info;
+    struct sockaddr_storage client_addr;
+    struct sigaction sa;
 };
 
 /** END FUZZTP_SERVER *********************************************************/
