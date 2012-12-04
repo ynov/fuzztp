@@ -95,14 +95,14 @@ static void fuzztps_handle_conn(int accsocket_fd, const char *client_addr)
     char client_msg[STDBUFFSIZE];
     char msg[STDBUFFSIZE];
 
-    sprintf(msg, "%s [Server connected to %s]", SR200, client_addr);
+    sprintf(msg, SR200 " [Server connected to %s]", client_addr);
     send(accsocket_fd, msg, strlen(msg), 0);
 
     for (;;) {
         recv(accsocket_fd, client_msg, STDBUFFSIZE, 0);
 
         if (strequal(client_msg, QUITMSG)) {
-            strcpy(msg, QUITMSG);
+            sprintf(msg, SR200 " [Server closed the connection to %s]", client_addr);
             send(accsocket_fd, msg, strlen(msg), 0);
 
             break;

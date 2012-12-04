@@ -136,12 +136,13 @@ static int fuzztpc_quit()
     }
 
     char msg[] = QUITMSG;
-    char res[SMALLBUFFSIZE];
+    char res[MEDIUMBUFFSIZE];
 
     fuzztpc_sendsrvmsg(msg, sizeof(msg), res, sizeof(res));
     printf("|| %s\n", res);
+    res[strlen(SR200)] = '\0';
 
-    if(strequal(res, QUITMSG)) {
+    if(strequal(res, SR200)) {
         close(f.socket_fd);
         f.connect_status = DISCONNECTED;
         printf("| Disconnected!\n");
