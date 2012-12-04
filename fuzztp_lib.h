@@ -1,6 +1,15 @@
 #ifndef FUZZTP_LIB_H
 #define FUZZTP_LIB_H
 
+#ifndef SPLIT_BUILD
+#   define BUILD_SERVER
+#   define BUILD_CLIENT
+#else
+#   ifndef BUILD_SERVER
+#       define BUILD_CLIENT
+#   endif
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -90,4 +99,4 @@ char *fuzztp_getcwd(int argc, char **argv);
 char *fuzztp_gets(char *s);
 int fuzztp_strtoken(char *str, char ***str_arr, char tok, int max_arr_len);
 
-#endif
+#endif /* FUZZTP_LIB_H */

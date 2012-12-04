@@ -1,4 +1,5 @@
 #include "fuzztp_lib.h"
+#ifdef BUILD_CLIENT
 
 // DECLARATION
 static struct fuzztp_client f;
@@ -330,3 +331,5 @@ int fuzztp_client_main(int argc, char **argv)
 
     return 0;
 }
+
+#endif /* BUILD_CLIENT */
