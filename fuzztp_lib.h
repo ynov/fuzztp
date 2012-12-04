@@ -16,7 +16,7 @@
 
 #define STDBUFFSIZE 256
 #define INPUTBUFFSIZE 256
-#define MEDIUMBUFFSIZE 128
+#define MEDIUMBUFFSIZE
 #define SMALLBUFFSIZE 32
 
 #define BACKLOG 10
@@ -26,9 +26,6 @@
 
 #define DISCONNECTED 0
 #define CONNECTED 1
-
-/******************************************************************************/
-/** BEGIN FUZZTP_CLIENT *******************************************************/
 
 #define CMD_CONN        "CONN"
 #define CMD_RETR        "RETR"
@@ -50,6 +47,8 @@
 #define CI_UNDEFINED    9
 #define CI_ERROR        10
 
+/** BEGIN FUZZTP_CLIENT *******************************************************/
+
 struct fuzztp_client {
     int connect_status;
     int socket_fd;
@@ -61,9 +60,7 @@ struct fuzztp_client {
 };
 
 /** END FUZZTP_CLIENT *********************************************************/
-/******************************************************************************/
 
-/******************************************************************************/
 /** BEGIN FUZZTP_SERVER *******************************************************/
 
 /* SR, Server Response */
@@ -83,7 +80,6 @@ struct fuzztp_server {
 };
 
 /** END FUZZTP_SERVER *********************************************************/
-/******************************************************************************/
 
 
 /* FUZZTPLIB */
