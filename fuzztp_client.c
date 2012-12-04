@@ -7,8 +7,14 @@ static void init_f();
 static int fuzztpc_connect(char *srv_addr);
 static int fuzztpc_sendsrvmsg(const char *msg,
         int msg_size, char *res, int res_size);
+
+static int fuzztpc_retrieve(char *path);
 static int fuzztpc_store(char *path);
 static int fuzztpc_quit();
+static int fuzztpc_list(char *path);
+static int fuzztpc_cwd(char *path);
+static int fuzztpc_cd(char *path);
+
 static int fuzztpc_parse_command(char *command);
 // END DECLARATION
 
@@ -106,28 +112,6 @@ static int fuzztpc_store(char *path)
 }
 
 /******************************************************************************/
-static int fuzztpc_list(char *path)
-{
-    return CI_LIST;
-}
-
-/******************************************************************************/
-static int fuzztpc_cwd(char *path)
-{
-    if (f.connect_status == DISCONNECTED) {
-        printf("| ERROR! No open connection!\n");
-        return CI_ERROR;
-    }
-    return CI_CWD;
-}
-
-/******************************************************************************/
-static int fuzztpc_cd(char *path)
-{
-    return CI_CD;
-}
-
-/******************************************************************************/
 static int fuzztpc_quit()
 {
     if (f.connect_status == DISCONNECTED) {
@@ -149,6 +133,28 @@ static int fuzztpc_quit()
     }
 
     return CI_QUIT;
+}
+
+/******************************************************************************/
+static int fuzztpc_list(char *path)
+{
+    return CI_LIST;
+}
+
+/******************************************************************************/
+static int fuzztpc_cwd(char *path)
+{
+    if (f.connect_status == DISCONNECTED) {
+        printf("| ERROR! No open connection!\n");
+        return CI_ERROR;
+    }
+    return CI_CWD;
+}
+
+/******************************************************************************/
+static int fuzztpc_cd(char *path)
+{
+    return CI_CD;
 }
 
 /******************************************************************************/

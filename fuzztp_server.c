@@ -6,7 +6,13 @@ static struct fuzztp_server f;
 static void init_f();
 static void fuzztps_listen();
 static void fuzztps_accept();
-static void fuzztps_handle_conn(int accsocket_fd, const char *client_addr);
+static void fuzztps_handle_conn(const char *client_addr);
+static void fuzztps_parse_msg(char *client_msg, const char *client_addr, int *loop_status);
+
+static int fuzztps_retrieve(char *path);
+static int fuzztps_store(char *path);
+static int fuzztps_list(char *path);
+static int fuzztps_cwd(char *path);
 // END DECLARATION
 
 /******************************************************************************/
@@ -78,7 +84,7 @@ static void fuzztps_accept()
             close(f.socket_fd);
 
             /* Handle the connection! */
-            fuzztps_handle_conn(f.accsocket_fd, client_addr_str);
+            fuzztps_handle_conn(client_addr_str);
 
             close(f.accsocket_fd);
             printf("Connection to %s closed. (CONN_ID: %d)\n", client_addr_str, conn_id);
@@ -90,23 +96,94 @@ static void fuzztps_accept()
 }
 
 /******************************************************************************/
-static void fuzztps_handle_conn(int accsocket_fd, const char *client_addr)
+static void fuzztps_handle_conn(const char *client_addr)
 {
     char client_msg[STDBUFFSIZE];
     char msg[STDBUFFSIZE];
+    int loop;
 
     sprintf(msg, SR200 " [Server connected to %s]", client_addr);
-    send(accsocket_fd, msg, strlen(msg), 0);
+    send(f.accsocket_fd, msg, strlen(msg), 0);
 
-    for (;;) {
-        recv(accsocket_fd, client_msg, STDBUFFSIZE, 0);
+    loop = 1;
+    while (loop) {
+        recv(f.accsocket_fd, client_msg, STDBUFFSIZE, 0);
+        fuzztps_parse_msg(client_msg, client_addr, &loop);
+    }
+}
 
-        if (strequal(client_msg, QUITMSG)) {
-            sprintf(msg, SR200 " [Server closed the connection to %s]", client_addr);
-            send(accsocket_fd, msg, strlen(msg), 0);
+/******************************************************************************/
+static int fuzztps_retrieve(char *path)
+{
+    return CI_RETR;
+}
 
-            break;
-        }
+/******************************************************************************/
+static int fuzztps_store(char *path)
+{
+    return CI_STOR;
+}
+
+/******************************************************************************/
+static int fuzztps_list(char *path)
+{
+    return CI_LIST;
+}
+
+/******************************************************************************/
+static int fuzztps_cwd(char *path)
+{
+    return CI_CWD;
+}
+
+/******************************************************************************/
+static void fuzztps_parse_msg(char *client_msg, const char *client_addr, int *loop_status)
+{
+    char **msg_arr;
+    char msg[STDBUFFSIZE];
+
+    fuzztp_strtoken(client_msg, &msg_arr, ' ', 16);
+
+    /* RETR */
+    if (strequal(msg_arr[0], CMD_RETR)) {
+        fuzztps_retrieve(msg_arr[1]);
+
+        free(msg_arr);
+        return;
+    }
+
+    /* STOR */
+    if (strequal(msg_arr[0], CMD_STOR)) {
+        fuzztps_store(msg_arr[1]);
+
+        free(msg_arr);
+        return;
+    }
+
+    /* QUIT */
+    if (strequal(msg_arr[0], CMD_QUIT)) {
+        sprintf(msg, SR200 " [Server closed the connection to %s]", client_addr);
+        send(f.accsocket_fd, msg, strlen(msg), 0);
+
+        *loop_status = 0;
+        free(msg_arr);
+        return;
+    }
+
+    /* LIST */
+    if (strequal(msg_arr[0], CMD_LIST)) {
+        fuzztps_list(msg_arr[1]);
+
+        free(msg_arr);
+        return;
+    }
+
+    /* CWD */
+    if (strequal(msg_arr[0], CMD_CWD)) {
+        fuzztps_cwd(msg_arr[1]);
+
+        free(msg_arr);
+        return;
     }
 }
 
