@@ -119,14 +119,14 @@ static int fuzztpc_quit()
         return CI_ERROR;
     }
 
-    char msg[] = QUITMSG;
+    char msg[] = CMD_QUIT;
     char res[MEDIUMBUFFSIZE];
 
     fuzztpc_sendsrvmsg(msg, sizeof(msg), res, sizeof(res));
     printf("|| %s\n", res);
     res[strlen(SR200)] = '\0';
 
-    if(strequal(res, SR200)) {
+    if (strequal(res, SR200)) {
         close(f.socket_fd);
         f.connect_status = DISCONNECTED;
         printf("| Disconnected!\n");
@@ -148,12 +148,37 @@ static int fuzztpc_cwd(char *path)
         printf("| ERROR! No open connection!\n");
         return CI_ERROR;
     }
+
+    char msg[STDBUFFSIZE];
+    char res[MEDIUMBUFFSIZE];
+
+    memset(&msg, 0, sizeof(msg));
+    sprintf(msg, CMD_CWD " %s", path);
+
+    fuzztpc_sendsrvmsg(msg, strlen(msg), res, sizeof(res));
+    printf("|| %s\n", res);
+    res[strlen(SR200)] = '\0';
+
+    if (strequal(res, SR200)) {
+        printf("| Server's working directory sucessfully changed to %s.\n", path);
+    } else {
+        printf("| ERROR! Couldn't change server's working directory to %s.\n", path);
+        printf("| Invalid path or permission denied.\n");
+    }
+
     return CI_CWD;
 }
 
 /******************************************************************************/
 static int fuzztpc_cd(char *path)
 {
+    if (chdir(path) == -1) {
+        printf("| ERROR while changing working directory to %s\n", path);
+        return CI_ERROR;
+    } else {
+        printf("| Successfully changed working directory to %s\n", path);
+        printf("| cwd: %s\n", getcwd(NULL, STDBUFFSIZE));
+    }
     return CI_CD;
 }
 

@@ -2,6 +2,7 @@
 
 // DECLARATION
 static struct fuzztp_server f;
+static int conn_id;
 
 static void init_f();
 static void fuzztps_listen();
@@ -60,7 +61,6 @@ static void fuzztps_accept()
 {
     char *client_addr_str;
     unsigned int client_addrlen;
-    int conn_id;
 
     f.sa.sa_handler = sigchld_handler;
     sigemptyset(&f.sa.sa_mask);
@@ -103,13 +103,16 @@ static void fuzztps_handle_conn(const char *client_addr)
     char client_msg[STDBUFFSIZE];
     char msg[STDBUFFSIZE];
     int loop;
+    int lb; /* last byte */
 
     sprintf(msg, SR200 " [Server connected to %s]", client_addr);
     send(f.accsocket_fd, msg, strlen(msg), 0);
 
     loop = 1;
     while (loop) {
-        recv(f.accsocket_fd, client_msg, STDBUFFSIZE, 0);
+        lb = recv(f.accsocket_fd, client_msg, STDBUFFSIZE, 0);
+        client_msg[lb] = '\0';
+
         fuzztps_parse_msg(client_msg, client_addr, &loop);
     }
 }
@@ -146,6 +149,18 @@ static int fuzztps_list(char *path)
 /******************************************************************************/
 static int fuzztps_cwd(char *path)
 {
+    char msg[STDBUFFSIZE];
+    printf("CWD: %s (CONN_ID: %d)\n", path, conn_id);
+
+    if (chdir(path) == -1) {
+        strcpy(msg, SR501);
+        printf("-- FAILED\n");
+    } else {
+        strcpy(msg, SR200);
+        printf("-- SUCCESS\n");
+    }
+
+    send(f.accsocket_fd, msg, strlen(msg), 0);
     return CI_CWD;
 }
 
@@ -154,7 +169,7 @@ static void fuzztps_parse_msg(char *client_msg, const char *client_addr, int *lo
 {
     char **msg_arr;
 
-    fuzztp_strtoken(client_msg, &msg_arr, ' ', 4);
+    fuzztp_strtoken(client_msg, &msg_arr, ' ', 16);
 
     /* RETR */
     if (strequal(msg_arr[0], CMD_RETR)) {
