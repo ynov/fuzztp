@@ -15,7 +15,7 @@ static int fuzztpc_list(char *path);
 static int fuzztpc_cwd(char *path);
 static int fuzztpc_cd(char *path);
 
-static int fuzztpc_parse_command(char *command);
+static void fuzztpc_parse_command(char *command, int *loop_status);
 // END DECLARATION
 
 /******************************************************************************/
@@ -158,89 +158,107 @@ static int fuzztpc_cd(char *path)
 }
 
 /******************************************************************************/
-static int fuzztpc_parse_command(char *command)
+static void fuzztpc_parse_command(char *command, int *loop_status)
 {
     char **cmd_arr;
     int arr_len;
 
-    arr_len = fuzztp_strtoken(command, &cmd_arr, ' ', 16);
+    arr_len = fuzztp_strtoken(command, &cmd_arr, ' ', 4);
 
     /* CONN */
     if (strequal(cmd_arr[0], CMD_CONN)) {
         if (arr_len == 2) {
-            return fuzztpc_connect(cmd_arr[1]);
+            fuzztpc_connect(cmd_arr[1]);
         } else {
             printf("| ERROR! Use: CONN <ip_address>\n");
         }
+        free(cmd_arr);
+        return;
     }
 
     /* RETR */
-    else if (strequal(cmd_arr[0], CMD_RETR)) {
+    if (strequal(cmd_arr[0], CMD_RETR)) {
         if (arr_len == 2) {
-            return fuzztpc_retrieve(cmd_arr[1]);
+            fuzztpc_retrieve(cmd_arr[1]);
         } else {
             printf("| ERROR! Use: RETR <path>\n");
         }
+        free(cmd_arr);
+        return;
     }
 
     /* STOR */
-    else if (strequal(cmd_arr[0], CMD_STOR)) {
+    if (strequal(cmd_arr[0], CMD_STOR)) {
         if (arr_len == 2) {
-            return fuzztpc_store(cmd_arr[1]);
+            fuzztpc_store(cmd_arr[1]);
         } else {
             printf("| ERROR! Use: PATH <path>\n");
         }
+        return;
     }
 
     /* QUIT */
-    else if (strequal(cmd_arr[0], CMD_QUIT)) {
-        return fuzztpc_quit();
+    if (strequal(cmd_arr[0], CMD_QUIT)) {
+        fuzztpc_quit();
+        free(cmd_arr);
+        return;
     }
 
     /* LIST */
-    else if (strequal(cmd_arr[0], CMD_LIST)) {
+    if (strequal(cmd_arr[0], CMD_LIST)) {
         if (arr_len == 2) {
             fuzztpc_list(cmd_arr[1]);
         } else {
             fuzztpc_list(NULL);
         }
-        return CI_LIST;
+        free(cmd_arr);
+        return;
     }
 
     /* CWD */
-    else if (strequal(cmd_arr[0], CMD_CWD)) {
+    if (strequal(cmd_arr[0], CMD_CWD)) {
         if (arr_len == 2) {
-            return fuzztpc_cwd(cmd_arr[1]);
+            fuzztpc_cwd(cmd_arr[1]);
         } else {
             printf("| ERROR! Use: CWD <path>\n");
         }
+        free(cmd_arr);
+        return;
     }
 
     /* CD */
-    else if (strequal(cmd_arr[0], CMD_CD)) {
+    if (strequal(cmd_arr[0], CMD_CD)) {
         if (arr_len == 2) {
-            return fuzztpc_cd(cmd_arr[1]);
+            fuzztpc_cd(cmd_arr[1]);
         } else {
             printf("| ERROR! Use: CD <path>\n");
         }
+        free(cmd_arr);
+        return;
     }
 
     /* SHUTDOWN */
-    else if (strequal(cmd_arr[0], CMD_SHUTDOWN)) {
+    if (strequal(cmd_arr[0], CMD_SHUTDOWN)) {
         if (f.connect_status == CONNECTED) {
             fuzztpc_quit();
         }
-        return CI_SHUTDOWN;
+
+        *loop_status = 0;
+        free(cmd_arr);
+        return;
     }
 
-    return CI_UNDEFINED;
+    /* UNDEFINED */
+    printf("| Unknown command!\n");
+    free(cmd_arr);
+    return;
 }
 
 /******************************************************************************/
 int fuzztp_client_main(int argc, char **argv)
 {
+    int loop;
     char command[INPUTBUFFSIZE];
-    int c_id;
 
     strcpy(f.cwd, fuzztp_getcwd(argc, argv));
 
@@ -249,17 +267,11 @@ int fuzztp_client_main(int argc, char **argv)
 
     init_f();
 
-    for(;;) {
+    loop = 1;
+    while(loop) {
         printf("\nfuzztp >> ");
         fuzztp_gets(command);
-        c_id = fuzztpc_parse_command(command);
-
-        if (c_id == CI_UNDEFINED) {
-            printf("| Unknown command!\n");
-        }
-        if (c_id == CI_SHUTDOWN) {
-            break;
-        }
+        fuzztpc_parse_command(command, &loop);
     }
 
     return 0;

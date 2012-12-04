@@ -7,12 +7,14 @@ static void init_f();
 static void fuzztps_listen();
 static void fuzztps_accept();
 static void fuzztps_handle_conn(const char *client_addr);
-static void fuzztps_parse_msg(char *client_msg, const char *client_addr, int *loop_status);
 
 static int fuzztps_retrieve(char *path);
 static int fuzztps_store(char *path);
+static int fuzztps_quit(const char *client_addr);
 static int fuzztps_list(char *path);
 static int fuzztps_cwd(char *path);
+
+static void fuzztps_parse_msg(char *client_msg, const char *client_addr, int *loop_status);
 // END DECLARATION
 
 /******************************************************************************/
@@ -125,6 +127,17 @@ static int fuzztps_store(char *path)
 }
 
 /******************************************************************************/
+static int fuzztps_quit(const char *client_addr)
+{
+    char msg[STDBUFFSIZE];
+
+    sprintf(msg, SR200 " [Server closed the connection to %s]", client_addr);
+    send(f.accsocket_fd, msg, strlen(msg), 0);
+
+    return CI_QUIT;
+}
+
+/******************************************************************************/
 static int fuzztps_list(char *path)
 {
     return CI_LIST;
@@ -140,9 +153,8 @@ static int fuzztps_cwd(char *path)
 static void fuzztps_parse_msg(char *client_msg, const char *client_addr, int *loop_status)
 {
     char **msg_arr;
-    char msg[STDBUFFSIZE];
 
-    fuzztp_strtoken(client_msg, &msg_arr, ' ', 16);
+    fuzztp_strtoken(client_msg, &msg_arr, ' ', 4);
 
     /* RETR */
     if (strequal(msg_arr[0], CMD_RETR)) {
@@ -162,8 +174,7 @@ static void fuzztps_parse_msg(char *client_msg, const char *client_addr, int *lo
 
     /* QUIT */
     if (strequal(msg_arr[0], CMD_QUIT)) {
-        sprintf(msg, SR200 " [Server closed the connection to %s]", client_addr);
-        send(f.accsocket_fd, msg, strlen(msg), 0);
+        fuzztps_quit(client_addr);
 
         *loop_status = 0;
         free(msg_arr);
@@ -185,6 +196,9 @@ static void fuzztps_parse_msg(char *client_msg, const char *client_addr, int *lo
         free(msg_arr);
         return;
     }
+
+    free(msg_arr);
+    return;
 }
 
 /******************************************************************************/
