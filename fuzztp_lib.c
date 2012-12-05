@@ -40,6 +40,36 @@ char *fuzztp_gets(char *s)
     return s;
 }
 
+int fuzztp_fexist(char *path, char *errmsg)
+{
+    int st_res;
+    struct stat st;
+
+    st_res = stat(path, &st);
+    if (st_res == -1) {
+        sprintf(errmsg, "%s doesn't exist or permission denied!", path);
+        return -1;
+    }
+
+    if (S_ISDIR(st.st_mode)) {
+        sprintf(errmsg, "%s is a directory, not a regular file!", path);
+        return -1;
+    }
+
+    return 0;
+}
+
+void fuzztp_get_filename_from_path(char *path, char *filename)
+{
+    int nidx;
+    char **splitted_path;
+
+    nidx = fuzztp_strtoken(path, &splitted_path, '/', 64);
+    strcpy(filename, splitted_path[nidx - 1]);
+
+    free(splitted_path);
+}
+
 int fuzztp_strtoken(char *str, char ***str_arr, char tok, int max_arr_len)
 {
     int i, j, k, len;

@@ -11,7 +11,7 @@ static void fuzztps_accept();
 static void fuzztps_handle_conn(const char *client_addr);
 
 static int fuzztps_retrieve(char *path);
-static int fuzztps_store(char *path);
+static int fuzztps_store(char *filename);
 static int fuzztps_quit(const char *client_addr);
 static int fuzztps_list(char *path);
 static int fuzztps_cwd(char *path);
@@ -121,15 +121,34 @@ static void fuzztps_handle_conn(const char *client_addr)
 /******************************************************************************/
 static int fuzztps_retrieve(char *path)
 {
-    /* TODO */
+    char errmsg[MEDIUMBUFFSIZE];
+    char msg[STDBUFFSIZE];
+
+    printf("RETR: %s (CONN_ID: %d)\n", path, conn_id);
+
+    if (fuzztp_fexist(path, errmsg) == -1) {
+        printf("-- FAIL, %s\n", errmsg);
+        sprintf(msg, SR501 " [%s]", errmsg);
+        send(f.accsocket_fd, msg, strlen(msg), 0);
+
+        return CI_ERROR;
+    }
+
+    strcpy(msg, SR150);
+    send(f.accsocket_fd, msg, strlen(msg), 0);
 
     return CI_RETR;
 }
 
 /******************************************************************************/
-static int fuzztps_store(char *path)
+static int fuzztps_store(char *filename)
 {
-    /* TODO */
+    char msg[STDBUFFSIZE];
+
+    printf("STOR: %s (CONN_ID: %d)\n", filename, conn_id);
+
+    strcpy(msg, SR150);
+    send(f.accsocket_fd, msg, strlen(msg), 0);
 
     return CI_STOR;
 }

@@ -97,6 +97,8 @@ struct fuzztp_server {
 int strequal(const char *a, const char *b);
 char *fuzztp_getcwd(int argc, char **argv);
 char *fuzztp_gets(char *s);
+int fuzztp_fexist(char *path, char *errmsg);
+void fuzztp_get_filename_from_path(char *path, char *filename);
 int fuzztp_strtoken(char *str, char ***str_arr, char tok, int max_arr_len);
 
 #endif /* FUZZTP_LIB_H */

@@ -100,7 +100,12 @@ static int fuzztpc_retrieve(char *path)
         return CI_ERROR;
     }
 
-    /* TODO */
+    char msg[STDBUFFSIZE];
+    char res[MEDIUMBUFFSIZE];
+
+    sprintf(msg, CMD_RETR " %s", path);
+    fuzztpc_sendsrvmsg(msg, strlen(msg), res, sizeof(res));
+    printf("|| %s\n", res);
 
     return CI_RETR;
 }
@@ -113,7 +118,21 @@ static int fuzztpc_store(char *path)
         return CI_ERROR;
     }
 
-    /* TODO */
+    char filename[MEDIUMBUFFSIZE];
+    char msg[MEDIUMBUFFSIZE];
+    char res[SMALLBUFFSIZE];
+
+    if (fuzztp_fexist(path, msg) == -1) {
+        printf("| ERROR! %s\n", msg);
+        return CI_ERROR;
+    }
+
+    fuzztp_get_filename_from_path(path, filename);
+
+    memset(&msg, 0, sizeof(msg));
+    sprintf(msg, CMD_STOR " %s", filename);
+    fuzztpc_sendsrvmsg(msg, strlen(msg), res, sizeof(res));
+    printf("|| %s\n", res);
 
     return CI_STOR;
 }
