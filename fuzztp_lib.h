@@ -58,7 +58,7 @@
 #define CI_UNDEFINED    9
 #define CI_ERROR        10
 
-/** BEGIN FUZZTP_CLIENT *******************************************************/
+/** FUZZTP_CLIENT */
 
 struct fuzztp_client {
     int connect_status;
@@ -70,9 +70,7 @@ struct fuzztp_client {
     char cwd[STDBUFFSIZE];
 };
 
-/** END FUZZTP_CLIENT *********************************************************/
-
-/** BEGIN FUZZTP_SERVER *******************************************************/
+/** FUZZTP_SERVER */
 
 /* SR, Server Response */
 #define SR150   "150"   /* ~(CONN, QUIT, CWD) */
@@ -90,10 +88,7 @@ struct fuzztp_server {
     struct sigaction sa;
 };
 
-/** END FUZZTP_SERVER *********************************************************/
-
-
-/* FUZZTPLIB */
+/** FUZZTPLIB */
 int strequal(const char *a, const char *b);
 char *fuzztp_getcwd(int argc, char **argv);
 char *fuzztp_gets(char *s);

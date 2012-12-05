@@ -1,7 +1,6 @@
 #include "fuzztp_lib.h"
 #ifdef BUILD_SERVER
 
-/* DECLARATION */
 static struct fuzztp_server f;
 static int conn_id;
 
@@ -17,9 +16,9 @@ static int fuzztps_list(char *path);
 static int fuzztps_cwd(char *path);
 
 static void fuzztps_parse_msg(char *client_msg, const char *client_addr, int *loop_status);
-/* END DECLARATION */
 
-/******************************************************************************/
+/** ------------------------------------------------------------------------ **/
+
 static void init_f()
 {
     memset(&f.hints, 0, sizeof(f.hints));
@@ -28,7 +27,6 @@ static void init_f()
     f.hints.ai_flags = AI_PASSIVE;
 }
 
-/******************************************************************************/
 static void fuzztps_listen()
 {
     int y = 1;
@@ -50,14 +48,12 @@ static void fuzztps_listen()
     printf("Server started! Host: %s\n", srv_addr);
 }
 
-/******************************************************************************/
 static void sigchld_handler(int s)
 {
     while (waitpid(-1, NULL, WNOHANG) > 0)
         ;
 }
 
-/******************************************************************************/
 static void fuzztps_accept()
 {
     char *client_addr_str;
@@ -98,7 +94,6 @@ static void fuzztps_accept()
     }
 }
 
-/******************************************************************************/
 static void fuzztps_handle_conn(const char *client_addr)
 {
     char client_msg[STDBUFFSIZE];
@@ -118,7 +113,6 @@ static void fuzztps_handle_conn(const char *client_addr)
     }
 }
 
-/******************************************************************************/
 static int fuzztps_retrieve(char *path)
 {
     char errmsg[MEDIUMBUFFSIZE];
@@ -144,7 +138,6 @@ static int fuzztps_retrieve(char *path)
     return CI_RETR;
 }
 
-/******************************************************************************/
 static int fuzztps_store(char *filename)
 {
     char msg[STDBUFFSIZE];
@@ -157,7 +150,6 @@ static int fuzztps_store(char *filename)
     return CI_STOR;
 }
 
-/******************************************************************************/
 static int fuzztps_quit(const char *client_addr)
 {
     char msg[STDBUFFSIZE];
@@ -168,7 +160,6 @@ static int fuzztps_quit(const char *client_addr)
     return CI_QUIT;
 }
 
-/******************************************************************************/
 static int fuzztps_list(char *path)
 {
     struct dirent **list;
@@ -212,7 +203,6 @@ static int fuzztps_list(char *path)
     return CI_LIST;
 }
 
-/******************************************************************************/
 static int fuzztps_cwd(char *path)
 {
     char msg[STDBUFFSIZE];
@@ -230,7 +220,6 @@ static int fuzztps_cwd(char *path)
     return CI_CWD;
 }
 
-/******************************************************************************/
 static void fuzztps_parse_msg(char *client_msg, const char *client_addr, int *loop_status)
 {
     char **msg_arr;
@@ -282,7 +271,6 @@ static void fuzztps_parse_msg(char *client_msg, const char *client_addr, int *lo
     return;
 }
 
-/******************************************************************************/
 int fuzztp_server_main(int argc, char **argv)
 {
     char *cwd;

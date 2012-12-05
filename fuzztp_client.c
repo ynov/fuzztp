@@ -1,7 +1,6 @@
 #include "fuzztp_lib.h"
 #ifdef BUILD_CLIENT
 
-/* DECLARATION */
 static struct fuzztp_client f;
 
 static void init_f();
@@ -17,9 +16,9 @@ static int fuzztpc_cwd(char *path);
 static int fuzztpc_cd(char *path);
 
 static void fuzztpc_parse_command(char *command, int *loop_status);
-/* END DECLARATION */
 
-/******************************************************************************/
+/** ------------------------------------------------------------------------ **/
+
 static void init_f()
 {
     f.connect_status = DISCONNECTED;
@@ -28,7 +27,6 @@ static void init_f()
     f.hints.ai_socktype = SOCK_STREAM;
 }
 
-/******************************************************************************/
 static int fuzztpc_connect(char *srv_addr)
 {
     char res[STDBUFFSIZE];
@@ -72,7 +70,6 @@ static int fuzztpc_connect(char *srv_addr)
     return CI_CONN;
 }
 
-/******************************************************************************/
 static int fuzztpc_sendsrvmsg(const char *msg,
         int msg_size, char *res, int res_size)
 {
@@ -92,7 +89,6 @@ static int fuzztpc_sendsrvmsg(const char *msg,
     return 0;
 }
 
-/******************************************************************************/
 static int fuzztpc_retrieve(char *path)
 {
     if (f.connect_status == DISCONNECTED) {
@@ -110,7 +106,6 @@ static int fuzztpc_retrieve(char *path)
     return CI_RETR;
 }
 
-/******************************************************************************/
 static int fuzztpc_store(char *path)
 {
     if (f.connect_status == DISCONNECTED) {
@@ -143,7 +138,6 @@ static int fuzztpc_store(char *path)
     return CI_STOR;
 }
 
-/******************************************************************************/
 static int fuzztpc_quit()
 {
     if (f.connect_status == DISCONNECTED) {
@@ -167,7 +161,6 @@ static int fuzztpc_quit()
     return CI_QUIT;
 }
 
-/******************************************************************************/
 static int fuzztpc_list(char *path)
 {
     char msg[STDBUFFSIZE];
@@ -196,7 +189,6 @@ static int fuzztpc_list(char *path)
     return CI_LIST;
 }
 
-/******************************************************************************/
 static int fuzztpc_cwd(char *path)
 {
     if (f.connect_status == DISCONNECTED) {
@@ -224,7 +216,6 @@ static int fuzztpc_cwd(char *path)
     return CI_CWD;
 }
 
-/******************************************************************************/
 static int fuzztpc_cd(char *path)
 {
     if (chdir(path) == -1) {
@@ -237,7 +228,6 @@ static int fuzztpc_cd(char *path)
     return CI_CD;
 }
 
-/******************************************************************************/
 static void fuzztpc_parse_command(char *command, int *loop_status)
 {
     char **cmd_arr;
@@ -334,7 +324,6 @@ static void fuzztpc_parse_command(char *command, int *loop_status)
     return;
 }
 
-/******************************************************************************/
 int fuzztp_client_main(int argc, char **argv)
 {
     int loop;
