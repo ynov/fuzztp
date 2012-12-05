@@ -137,6 +137,10 @@ static int fuzztps_retrieve(char *path)
     strcpy(msg, SR150);
     send(f.accsocket_fd, msg, strlen(msg), 0);
 
+    printf("-- Begin file transfer...\n");
+    fuzztp_read_send_file_chunked(path, f.accsocket_fd);
+    printf("-- End file transfer.\n");
+
     return CI_RETR;
 }
 

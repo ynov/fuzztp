@@ -134,6 +134,12 @@ static int fuzztpc_store(char *path)
     fuzztpc_sendsrvmsg(msg, strlen(msg), res, sizeof(res));
     printf("|| %s\n", res);
 
+    if (strequal(res, SR150)) {
+        printf("| Begin file transfer...\n");
+        fuzztp_read_send_file_chunked(path, f.socket_fd);
+        printf("| End file transfer.\n");
+    }
+
     return CI_STOR;
 }
 

@@ -59,6 +59,11 @@ int fuzztp_fexist(char *path, char *errmsg)
     return 0;
 }
 
+void fuzztp_read_send_file_chunked(char *path, int socket_fd)
+{
+
+}
+
 void fuzztp_get_filename_from_path(char *path, char *filename)
 {
     int nidx;
