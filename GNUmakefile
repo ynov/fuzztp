@@ -1,13 +1,13 @@
 CC=gcc -std=gnu99 -Wall
 
 all:
-	$(CC) *.c -o build/fuzztp_server -DSPLIT_BUILD -DBUILD_SERVER
-	$(CC) *.c -o build/fuzztp_client -DSPLIT_BUILD
+	$(CC) src/*.c -o bin/fuzztp_server -DSPLIT_BUILD -DBUILD_SERVER
+	$(CC) src/*.c -o bin/fuzztp_client -DSPLIT_BUILD
 
 union:
-	$(CC) *.c -o build/fuzztp
+	$(CC) src/*.c -o bin/fuzztp
 
 clean:
-	rm -vf build/*
-	touch build/empty
+	rm -vf bin/*
+	touch bin/_
 
