@@ -61,7 +61,78 @@ int fuzztp_fexist(char *path, char *errmsg)
 
 void fuzztp_read_send_file_chunked(char *path, int socket_fd)
 {
+    char fsize_msg[MEDIUMBUFFSIZE];
+    char msg[SMALLBUFFSIZE];
+    char buff[FILEBUFFSIZE];
+    FILE *file;
+    int fsize;
+    int fptr;
+    int lb;
 
+    file = fopen(path, "rb");
+    fseek(file, 0, SEEK_END);
+    fsize = ftell(file);
+
+    sprintf(fsize_msg, "%d", fsize);
+    send(socket_fd, fsize_msg, strlen(fsize_msg), 0);
+    printf("-- SEND filesize: %d bytes\n", fsize);
+
+    lb = recv(socket_fd, msg, SMALLBUFFSIZE, 0);
+    msg[lb] = '\0';
+
+    /* send file in chunked FILEBUFFSIZE filesize */
+    fptr = 0;
+    while (fptr <= fsize - FILEBUFFSIZE) {
+        fseek(file, fptr, SEEK_SET);
+        fread(buff, FILEBUFFSIZE, 1, file);
+        send(socket_fd, buff, FILEBUFFSIZE, 0);
+        fptr += FILEBUFFSIZE;
+        /* printf("-- SEND %d bytes\n", fptr); */
+    }
+
+    fseek(file, fptr, SEEK_SET);
+    fread(buff, fsize - fptr, 1, file);
+    send(socket_fd, buff, fsize - fptr, 0);
+    /* printf("-- SEND %d bytes\n", fsize - fptr); */
+
+    printf("-- END!\n");
+    fclose(file);
+}
+
+void fuzztp_retrieve_write_file_chunked(char *filename, int socket_fd)
+{
+    char fsize_msg[MEDIUMBUFFSIZE];
+    char buff[FILEBUFFSIZE];
+//    char msg[SMALLBUFFSIZE];
+    int lb;
+    FILE *file;
+    int fsize;
+    int fptr;
+
+    /* get the filesize */
+    lb = recv(socket_fd, fsize_msg, MEDIUMBUFFSIZE, 0);
+    fsize_msg[lb] = '\0';
+    sscanf(fsize_msg, "%d", &fsize);
+    printf("| RECEIVE filesize: %d bytes\n", fsize);
+
+    send(socket_fd, "NEXT", SMALLBUFFSIZE, 0);
+
+    /* receive chunked file, and write */
+    file = fopen(filename, "wb+");
+
+    fptr = 0;
+    while (fptr <= fsize - FILEBUFFSIZE) {
+        recv(socket_fd, buff, FILEBUFFSIZE, 0);
+        fwrite(buff, FILEBUFFSIZE, 1, file);
+        fptr += FILEBUFFSIZE;
+        /* printf("| RECEIVE %d bytes\n", fptr); */
+    }
+
+    recv(socket_fd, buff, fsize - fptr, 0);
+    fwrite(buff, fsize - fptr, 1, file);
+    /* printf("| RECEIVE %d bytes\n", fsize - fptr); */
+
+    fclose(file);
 }
 
 void fuzztp_get_filename_from_path(char *path, char *filename)

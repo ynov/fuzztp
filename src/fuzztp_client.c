@@ -97,11 +97,28 @@ static int fuzztpc_retrieve(char *path)
     }
 
     char msg[STDBUFFSIZE];
-    char res[MEDIUMBUFFSIZE];
+    char res[STDBUFFSIZE];
+    char filename[MEDIUMBUFFSIZE];
 
     sprintf(msg, CMD_RETR " %s", path);
-    fuzztpc_sendsrvmsg(msg, strlen(msg), res, sizeof(res));
+    fuzztpc_sendsrvmsg(msg, STDBUFFSIZE, res, STDBUFFSIZE);
     printf("|| %s\n", res);
+    res[strlen(SR150)] = '\0';
+
+    if (strequal(res, SR150)) {
+        fuzztp_get_filename_from_path(path, filename);
+        send(f.socket_fd, "READY", SMALLBUFFSIZE, 0);
+
+        recv(f.socket_fd, res, SMALLBUFFSIZE, 0);
+        printf("|| %s\n", res);
+
+        printf("| Retrieving file...\n");
+        fuzztp_retrieve_write_file_chunked(filename, f.socket_fd);
+        printf("| Finished retrieving file.\n");
+
+        recv(f.socket_fd, res, SMALLBUFFSIZE, 0);
+        printf("|| %s\n", res);
+    }
 
     return CI_RETR;
 }
@@ -113,26 +130,36 @@ static int fuzztpc_store(char *path)
         return CI_ERROR;
     }
 
-    char filename[MEDIUMBUFFSIZE];
-    char msg[MEDIUMBUFFSIZE];
-    char res[SMALLBUFFSIZE];
+    char tmp_path[STDBUFFSIZE];
+    char filename[STDBUFFSIZE];
+    char msg[STDBUFFSIZE];
+    char res[STDBUFFSIZE];
 
     if (fuzztp_fexist(path, msg) == -1) {
         printf("| ERROR! %s\n", msg);
         return CI_ERROR;
     }
 
-    fuzztp_get_filename_from_path(path, filename);
+    strcpy(tmp_path, path);
+    fuzztp_get_filename_from_path(tmp_path, filename);
 
     memset(&msg, 0, sizeof(msg));
     sprintf(msg, CMD_STOR " %s", filename);
-    fuzztpc_sendsrvmsg(msg, strlen(msg), res, sizeof(res));
+    fuzztpc_sendsrvmsg(msg, STDBUFFSIZE, res, STDBUFFSIZE);
     printf("|| %s\n", res);
 
     if (strequal(res, SR150)) {
+        send(f.socket_fd, "READY", SMALLBUFFSIZE, 0);
+
+        recv(f.socket_fd, res, SMALLBUFFSIZE, 0);
+        printf("|| %s\n", res);
+
         printf("| Begin file transfer...\n");
         fuzztp_read_send_file_chunked(path, f.socket_fd);
         printf("| End file transfer.\n");
+
+        recv(f.socket_fd, res, SMALLBUFFSIZE, 0);
+        printf("|| %s\n", res);
     }
 
     return CI_STOR;
@@ -163,6 +190,11 @@ static int fuzztpc_quit()
 
 static int fuzztpc_list(char *path)
 {
+    if (f.connect_status == DISCONNECTED) {
+        printf("| ERROR! No open connection!\n");
+        return CI_ERROR;
+    }
+
     char msg[STDBUFFSIZE];
     char res[BIGBUFFSIZE];
     int lb;
@@ -174,12 +206,13 @@ static int fuzztpc_list(char *path)
         strcpy(msg, CMD_LIST);
     }
 
-    fuzztpc_sendsrvmsg(msg, strlen(msg), res, SMALLBUFFSIZE);
+    fuzztpc_sendsrvmsg(msg, STDBUFFSIZE, res, SMALLBUFFSIZE);
     printf("|| %s\n", res);
     res[strlen(SR150)] = '\0';
 
     if (strequal(res, SR150)) {
-        lb = recv(f.socket_fd, res, sizeof(res), 0);
+        memset(&res, 0, BIGBUFFSIZE);
+        lb = recv(f.socket_fd, res, BIGBUFFSIZE, 0);
         res[lb] = '\0';
         printf("\n%s\n", res);
     } else {
@@ -202,7 +235,7 @@ static int fuzztpc_cwd(char *path)
     memset(&msg, 0, sizeof(msg));
     sprintf(msg, CMD_CWD " %s", path);
 
-    fuzztpc_sendsrvmsg(msg, strlen(msg), res, sizeof(res));
+    fuzztpc_sendsrvmsg(msg, STDBUFFSIZE, res, SMALLBUFFSIZE);
     printf("|| %s\n", res);
     res[strlen(SR200)] = '\0';
 

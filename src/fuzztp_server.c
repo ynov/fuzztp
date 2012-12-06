@@ -102,7 +102,7 @@ static void fuzztps_handle_conn(const char *client_addr)
     int lb; /* last byte */
 
     sprintf(msg, SR200 " [Server connected to %s]", client_addr);
-    send(f.accsocket_fd, msg, strlen(msg), 0);
+    send(f.accsocket_fd, msg, STDBUFFSIZE, 0);
 
     loop = 1;
     while (loop) {
@@ -115,25 +115,39 @@ static void fuzztps_handle_conn(const char *client_addr)
 
 static int fuzztps_retrieve(char *path)
 {
-    char errmsg[MEDIUMBUFFSIZE];
+    char errmsg[STDBUFFSIZE];
     char msg[STDBUFFSIZE];
+    int lb;
 
     printf("RETR: %s (CONN_ID: %d)\n", path, conn_id);
 
     if (fuzztp_fexist(path, errmsg) == -1) {
         printf("-- FAIL, %s\n", errmsg);
         sprintf(msg, SR501 " [%s]", errmsg);
-        send(f.accsocket_fd, msg, strlen(msg), 0);
+        send(f.accsocket_fd, msg, STDBUFFSIZE, 0);
 
         return CI_ERROR;
     }
 
     strcpy(msg, SR150);
-    send(f.accsocket_fd, msg, strlen(msg), 0);
+    send(f.accsocket_fd, msg, STDBUFFSIZE, 0);
 
-    printf("-- Begin file transfer...\n");
-    fuzztp_read_send_file_chunked(path, f.accsocket_fd);
-    printf("-- End file transfer.\n");
+    lb = recv(f.accsocket_fd, msg, SMALLBUFFSIZE, 0);
+    msg[lb] = '\0';
+
+    if (strequal(msg, "READY")) {
+        printf("-- Client ready\n");
+
+        strcpy(msg, SR250);
+        send(f.accsocket_fd, msg, SMALLBUFFSIZE, 0);
+
+        printf("-- Begin file transfer...\n");
+        fuzztp_read_send_file_chunked(path, f.accsocket_fd);
+        printf("-- End file transfer.\n");
+
+        strcpy(msg, SR250);
+        send(f.accsocket_fd, msg, SMALLBUFFSIZE, 0);
+    }
 
     return CI_RETR;
 }
@@ -141,11 +155,29 @@ static int fuzztps_retrieve(char *path)
 static int fuzztps_store(char *filename)
 {
     char msg[STDBUFFSIZE];
+    int lb;
 
     printf("STOR: %s (CONN_ID: %d)\n", filename, conn_id);
 
     strcpy(msg, SR150);
-    send(f.accsocket_fd, msg, strlen(msg), 0);
+    send(f.accsocket_fd, msg, STDBUFFSIZE, 0);
+
+    lb = recv(f.accsocket_fd, msg, SMALLBUFFSIZE, 0);
+    msg[lb] = '\0';
+
+    if (strequal(msg, "READY")) {
+        printf("-- Client ready\n");
+
+        strcpy(msg, SR250);
+        send(f.accsocket_fd, msg, SMALLBUFFSIZE, 0);
+
+        printf("-- Begin file transfer...\n");
+        fuzztp_retrieve_write_file_chunked(filename, f.accsocket_fd);
+        printf("-- End file transfer.\n");
+
+        strcpy(msg, SR250);
+        send(f.accsocket_fd, msg, SMALLBUFFSIZE, 0);
+    }
 
     return CI_STOR;
 }
@@ -155,7 +187,7 @@ static int fuzztps_quit(const char *client_addr)
     char msg[STDBUFFSIZE];
 
     sprintf(msg, SR200 " [Server closed the connection to %s]", client_addr);
-    send(f.accsocket_fd, msg, strlen(msg), 0);
+    send(f.accsocket_fd, msg, STDBUFFSIZE, 0);
 
     return CI_QUIT;
 }
@@ -176,18 +208,21 @@ static int fuzztps_list(char *path)
 
     if (n < 0) {
         strcpy(msg, SR501);
-        send(f.accsocket_fd, msg, strlen(msg), 0);
+        send(f.accsocket_fd, msg, SMALLBUFFSIZE, 0);
         printf("-- FAILED\n");
         return CI_ERROR;
     } else {
         strcpy(msg, SR150);
-        send(f.accsocket_fd, msg, strlen(msg), 0);
+        send(f.accsocket_fd, msg, SMALLBUFFSIZE, 0);
         printf("-- SUCCESS\n");
     }
+
+    memset(&msg, 0, BIGBUFFSIZE);
 
     sprintf(msg, "CWD: %s", getcwd(NULL, STDBUFFSIZE));
     sprintf(msg, "%s\nPATH: %s", msg, path);
     sprintf(msg, "%s\n", msg);
+
     for (i = 0; i < n; i++) {
         if (list[i]->d_type == DT_DIR) {
             sprintf(msg, "%s\n%s/ (dir)", msg, list[i]->d_name);
@@ -198,14 +233,14 @@ static int fuzztps_list(char *path)
     }
     free(list);
 
-    send(f.accsocket_fd, msg, strlen(msg), 0);
+    send(f.accsocket_fd, msg, BIGBUFFSIZE - 1, 0);
 
     return CI_LIST;
 }
 
 static int fuzztps_cwd(char *path)
 {
-    char msg[STDBUFFSIZE];
+    char msg[SMALLBUFFSIZE];
     printf("CWD: %s (CONN_ID: %d)\n", path, conn_id);
 
     if (chdir(path) == -1) {
@@ -216,7 +251,7 @@ static int fuzztps_cwd(char *path)
         printf("-- SUCCESS\n");
     }
 
-    send(f.accsocket_fd, msg, strlen(msg), 0);
+    send(f.accsocket_fd, msg, SMALLBUFFSIZE, 0);
     return CI_CWD;
 }
 

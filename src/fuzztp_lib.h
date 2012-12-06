@@ -24,12 +24,13 @@
 #include <signal.h>
 #include <dirent.h>
 
-#define BIGBUFFSIZE 2048
+#define BIGBUFFSIZE (1 << 14)
 #define STDBUFFSIZE 256
 #define INPUTBUFFSIZE 256
 #define MEDIUMBUFFSIZE 128
 #define SMALLBUFFSIZE 32
 
+#define FILEBUFFSIZE (1 << 14)
 #define BACKLOG 10
 
 #define FUZZTPPORT "15601"
@@ -94,6 +95,7 @@ char *fuzztp_getcwd(int argc, char **argv);
 char *fuzztp_gets(char *s);
 int fuzztp_fexist(char *path, char *errmsg);
 void fuzztp_read_send_file_chunked(char *path, int socket_fd);
+void fuzztp_retrieve_write_file_chunked(char *filename, int socket_fd);
 void fuzztp_get_filename_from_path(char *path, char *filename);
 int fuzztp_strtoken(char *str, char ***str_arr, char tok, int max_arr_len);
 
